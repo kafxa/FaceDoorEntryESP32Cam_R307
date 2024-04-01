@@ -9,8 +9,8 @@
 #include "fr_flash.h"
 #include "Adafruit_Fingerprint.h"
 
-const char *ssid = "wifi";
-const char *password = "pass";
+const char *ssid = "iQ ExpandtQ 2.4G";
+const char *password = "Gigabyte@3.14";
 
 #define ENROLL_CONFIRM_TIMES 5
 #define FACE_ID_SAVE_NUMBER 7
@@ -35,8 +35,8 @@ void app_facenet_main();
 void app_httpserver_init();
 
 // Assign the fingerprint sensor to Serial2
-HardwareSerial mySerial(2);
-Adafruit_Fingerprint finger(&mySerial);
+HardwareSerial hs(2);
+Adafruit_Fingerprint finger(&hs);
 
 typedef struct
 {
@@ -94,31 +94,31 @@ httpd_resp_value st_name;
 
 void setup()
 {
-  Serial.begin(57600);
+  Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
   digitalWrite(relay_pin, LOW);
   pinMode(relay_pin, OUTPUT);
 
-  mySerial.begin(57600, SERIAL_8N1, 15, 13);
-  finger.begin(57600);
+  hs.begin(57600, SERIAL_8N1, 13, 15); // RX = GPIO 12, TX = GPIO 13
+  //finger.begin(57600);
 
   Serial.println(F("Reading sensor parameters"));
-  //int fingerparam = finger.getParameters();
-  // Serial.print(F("Status: 0x"));
-  // Serial.println(finger.status_reg, HEX);
-  // Serial.print(F("Sys ID: 0x"));
-  // Serial.println(finger.system_id, HEX);
-  // Serial.print(F("Capacity: "));
-  // Serial.println(finger.capacity);
-  // Serial.print(F("Security level: "));
-  // Serial.println(finger.security_level);
-  // Serial.print(F("Device address: "));
-  // Serial.println(finger.device_addr, HEX);
-  // Serial.print(F("Packet len: "));
-  // Serial.println(finger.packet_len);
-  // Serial.print(F("Baud rate: "));
-  // Serial.println(finger.baud_rate);
+  finger.getParameters();
+  Serial.print(F("Status: 0x"));
+  Serial.println(finger.status_reg, HEX);
+  Serial.print(F("Sys ID: 0x"));
+  Serial.println(finger.system_id, HEX);
+  Serial.print(F("Capacity: "));
+  Serial.println(finger.capacity);
+  Serial.print(F("Security level: "));
+  Serial.println(finger.security_level);
+  Serial.print(F("Device address: "));
+  Serial.println(finger.device_addr, HEX);
+  Serial.print(F("Packet len: "));
+  Serial.println(finger.packet_len);
+  Serial.print(F("Baud rate: "));
+  Serial.println(finger.baud_rate);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -198,7 +198,7 @@ int getFreeId()
   return -1; // No free ID found
 }
 
-uint8_t enrollFingerprint(WebsocketsClient &client, String personName)
+uint8_t enrollFingerprint(WebsocketsClient &client)
 {
   int id = getFreeId(); // Find a free ID for the new fingerprint
   if (id < 0)
@@ -560,13 +560,13 @@ if (msg.data() == ("store_fingerprint:"))
     String personName = msg.data().substring(18); // Extract person's name from the message
     Serial.println("Storing fingerprint for: " + personName);
     // Call function to start fingerprint enrollment process
-    enrollFingerprint(client, personName);
+    enrollFingerprint(client);
   }
   if (msg.data() == ("detect_fingerprint"))
   {
     String personName = msg.data().substring(18);
     global_state = START_FINGERPRINT_DETECT;
-    if (enrollFingerprint(client, personName))
+    if (enrollFingerprint(client))
     { 
       client.send("fingerprint_recognized");
       fingerprintRecognized = true; // Assume this is a global or appropriately scoped variable
@@ -624,7 +624,7 @@ void loop()
   send_face_list(client);
   client.send("STREAMING");
 
-
+  enrollFingerprint(client);
   
   // Main loop that runs continuously after setup
   while (client.available()) {
