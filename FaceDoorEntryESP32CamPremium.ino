@@ -35,7 +35,7 @@ void app_facenet_main();
 void app_httpserver_init();
 
 // Assign the fingerprint sensor to Serial2
-HardwareSerial mySerial(1);
+HardwareSerial mySerial(2);
 Adafruit_Fingerprint finger(&mySerial);
 
 typedef struct
